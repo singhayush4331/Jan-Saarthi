@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jan Saarthi — Full Stack MVP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&family=Noto+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --green:       #1a6b3c;
+  --green-mid:   #2d9e60;
+  --green-light: #e6f5ee;
+  --amber:       #e6890a;
+  --amber-light: #fef6e6;
+  --blue:        #1f6fae;
+  --blue-light:  #e8f3fb;
+  --red:         #d63031;
+  --bg:          #f1f5f1;
+  --surface:     #ffffff;
+  --surface2:    #f7faf7;
+  --text:        #1a1a1a;
+  --muted:       #6b7280;
+  --border:      rgba(0,0,0,0.08);
+  --shadow-sm:   0 1px 6px rgba(0,0,0,0.07);
+  --shadow:      0 3px 16px rgba(0,0,0,0.10);
+  --shadow-lg:   0 8px 32px rgba(0,0,0,0.14);
+  --r:           14px;
+  --r-sm:        8px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* ═══════════════════════════════════════════
+   APP SHELL — MODE SWITCHER
+═══════════════════════════════════════════ */
+.app { display:none; flex-direction:column; height:100vh; overflow:hidden; }
+.app.active { display:flex; }
+
+/* MODE PICKER SCREEN */
+#mode-screen {
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:var(--green);
+  padding:32px 24px;
+  gap:0;
+}
+.brand-logo {
+  font-family:'Baloo 2',sans-serif;
+  font-size:42px;
+  font-weight:800;
+  color:#fff;
+  letter-spacing:-1px;
+  line-height:1;
+  margin-bottom:6px;
+}
+.brand-tagline {
+  font-size:14px;
+  color:rgba(255,255,255,0.7);
+  margin-bottom:48px;
+  font-weight:500;
+}
+.mode-cards {
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  width:100%;
+  max-width:360px;
+}
+.mode-card {
+  background:#fff;
+  border-radius:var(--r);
+  padding:20px 22px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  transition:transform 0.15s, box-shadow 0.15s;
+  box-shadow:var(--shadow);
+  border:2px solid transparent;
+}
+.mode-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+.mode-icon { font-size:32px; flex-shrink:0; }
+.mode-title { font-family:'Baloo 2',sans-serif; font-size:18px; font-weight:700; color:var(--text); }
+.mode-desc { font-size:12px; color:var(--muted); margin-top:2px; }
+.mode-arrow { margin-left:auto; font-size:20px; color:var(--green); }
+
+.api-banner {
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.25);
+  border-radius:var(--r-sm);
+  padding:12px 14px;
+  margin-top:32px;
+  width:100%;
+  max-width:360px;
+  font-size:12px;
+  color:rgba(255,255,255,0.85);
+}
+.api-banner input {
+  width:100%;
+  margin-top:8px;
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,0.3);
+  border-radius:6px;
+  background:rgba(255,255,255,0.15);
+  color:#fff;
+  font-size:12px;
+  font-family:monospace;
+  outline:none;
+}
+.api-banner input::placeholder { color:rgba(255,255,255,0.5); }
+
+/* ═══════════════════════════════════════════
+   SHARED TOPBAR
+═══════════════════════════════════════════ */
+.topbar {
+  background:var(--green);
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-shrink:0;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2);
+  z-index:50;
+}
+.back-btn {
+  background:rgba(255,255,255,0.15);
+  border:none;
+  width:34px; height:34px;
+  border-radius:8px;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.topbar-title { font-family:'Baloo 2',sans-serif; font-size:18px; font-weight:700; color:#fff; flex:1; }
+.topbar-sub { font-size:11px; color:rgba(255,255,255,0.7); }
+.live-badge {
+  background:rgba(255,255,255,0.15);
+  border:1px solid rgba(255,255,255,0.3);
+  padding:4px 10px;
+  border-radius:20px;
+  font-size:11px;
+  color:#fff;
+  font-weight:600;
+  display:flex; align-items:center; gap:5px;
+}
+.live-dot { width:6px;height:6px;background:#4ade80;border-radius:50%;animation:blink 1.4s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* ═══════════════════════════════════════════
+   RIDER APP
+═══════════════════════════════════════════ */
+.rider-search {
+  background:var(--green);
+  padding:0 14px 14px;
+  flex-shrink:0;
+}
+.search-card {
+  background:#fff;
+  border-radius:var(--r);
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.search-row {
+  display:flex; align-items:center; gap:10px;
+  padding:11px 14px;
+  border-bottom:1px solid var(--border);
+}
+.search-row:last-child { border-bottom:none; }
+.s-dot { width:10px;height:10px;border-radius:50%;flex-shrink:0; }
+.s-input {
+  flex:1; border:none; outline:none;
+  font-family:'Noto Sans',sans-serif;
+  font-size:13px; color:var(--text);
+  background:transparent;
+}
+.s-input::placeholder { color:var(--muted); }
+
+.filter-bar {
+  display:flex; gap:8px; overflow-x:auto; scrollbar-width:none;
+  padding:10px 14px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.filter-bar::-webkit-scrollbar { display:none; }
+.chip {
+  padding:5px 13px;
+  border-radius:20px;
+  font-size:12px; font-weight:500;
+  white-space:nowrap; cursor:pointer;
+  border:1.5px solid var(--border);
+  background:var(--surface); color:var(--muted);
+  transition:all 0.15s;
+  font-family:'Noto Sans',sans-serif;
+}
+.chip.on { background:var(--green); color:#fff; border-color:var(--green); }
+
+/* MAP */
+#rider-map-wrap {
+  position:relative;
+  height:240px;
+  flex-shrink:0;
+  background:#e8f0e4;
+  overflow:hidden;
+}
+#rider-map, #demo-map-rider { width:100%;height:100%; }
+#demo-map-rider { position:relative; }
+#demo-map-rider svg { width:100%;height:100%; }
+
+.map-vmarker {
+  position:absolute;
+  transform:translate(-50%,-100%);
+  cursor:pointer;
+  z-index:10;
+  transition:all 3s ease;
+}
+.mv-bubble {
+  background:#fff;
+  border-radius:7px;
+  padding:4px 8px;
+  font-size:11px;font-weight:700;
+  white-space:nowrap;
+  box-shadow:var(--shadow);
+  position:relative;
+  font-family:'Baloo 2',sans-serif;
+  border:1.5px solid;
+}
+.mv-bubble::after {
+  content:'';position:absolute;bottom:-6px;left:50%;
+  transform:translateX(-50%);
+  border:4px solid transparent;
+}
+.mv-bus { border-color:var(--blue);color:var(--blue); }
+.mv-bus::after { border-top-color:#fff; }
+.mv-auto { border-color:var(--amber);color:var(--amber); }
+.mv-auto::after { border-top-color:#fff; }
+.mv-erick { border-color:var(--green);color:var(--green); }
+.mv-erick::after { border-top-color:#fff; }
+
+.user-pin {
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  z-index:20;pointer-events:none;
+}
+.user-pin-dot {
+  width:14px;height:14px;
+  background:var(--green);
+  border:3px solid #fff;
+  border-radius:50%;
+  box-shadow:0 0 0 5px rgba(26,107,60,0.2);
+  animation:ring 2s ease infinite;
+}
+@keyframes ring { 0%,100%{box-shadow:0 0 0 5px rgba(26,107,60,0.15)} 50%{box-shadow:0 0 0 12px rgba(26,107,60,0)} }
+
+.map-legend {
+  position:absolute;top:10px;left:10px;
+  background:rgba(255,255,255,0.95);
+  border-radius:8px;padding:7px 10px;
+  font-size:10px;display:flex;flex-direction:column;gap:3px;
+  box-shadow:var(--shadow-sm);
+}
+.ml-row { display:flex;align-items:center;gap:5px;font-weight:500; }
+.ml-dot { width:7px;height:7px;border-radius:50%; }
+
+.map-fab {
+  position:absolute;bottom:10px;right:10px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.fab-btn {
+  width:34px;height:34px;background:#fff;
+  border:none;border-radius:8px;
+  box-shadow:var(--shadow);cursor:pointer;
+  font-size:15px;display:flex;align-items:center;justify-content:center;
+}
+
+/* VEHICLE LIST */
+.rider-list {
+  flex:1;overflow-y:auto;
+  padding:10px 14px 80px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.list-header {
+  display:flex;justify-content:space-between;align-items:center;
+  padding:4px 0 2px;
+}
+.list-title { font-family:'Baloo 2',sans-serif;font-size:15px;font-weight:700; }
+.list-count { font-size:11px;color:var(--muted);background:var(--bg);padding:3px 8px;border-radius:10px; }
+
+.vcard {
+  background:var(--surface);
+  border-radius:var(--r);
+  padding:13px;
+  box-shadow:var(--shadow-sm);
+  border:1.5px solid transparent;
+  cursor:pointer;
+  transition:all 0.18s;
+}
+.vcard:hover { border-color:var(--green);transform:translateY(-1px); }
+.vcard.sel { border-color:var(--green);background:var(--green-light); }
+.vcard-top { display:flex;align-items:center;gap:11px; }
+.vcard-ico {
+  width:46px;height:46px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:21px;flex-shrink:0;
+}
+.ico-bus { background:var(--blue-light); }
+.ico-auto { background:var(--amber-light); }
+.ico-erick { background:var(--green-light); }
+.vcard-body { flex:1;min-width:0; }
+.vcard-name { font-family:'Baloo 2',sans-serif;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.vcard-route { font-size:11px;color:var(--muted);margin-top:1px; }
+.vcard-pills { display:flex;gap:6px;margin-top:5px;flex-wrap:wrap; }
+.pill { font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600; }
+.pill-eta { background:#e6f5ee;color:var(--green); }
+.pill-seats { background:#fef6e6;color:var(--amber); }
+.pill-live { background:#fdecea;color:var(--red);display:flex;align-items:center;gap:3px; }
+.pill-live-dot { width:5px;height:5px;border-radius:50%;background:var(--red);animation:blink 1s infinite; }
+.vcard-price { text-align:right;flex-shrink:0; }
+.price-big { font-family:'Baloo 2',sans-serif;font-size:20px;font-weight:800;color:var(--green); }
+.price-lbl { font-size:9px;color:var(--muted); }
+.book-row { margin-top:10px;display:none; }
+.vcard.sel .book-row { display:block; }
+.book-btn {
+  width:100%;padding:10px;
+  background:var(--green);color:#fff;
+  border:none;border-radius:var(--r-sm);
+  font-family:'Baloo 2',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:background 0.15s, transform 0.1s;
+}
+.book-btn:hover { background:#155c32; }
+.book-btn:active { transform:scale(0.98); }
+
+/* BOTTOM NAV */
+.bnav {
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  display:flex;padding:8px 0 14px;z-index:40;
+}
+.bnav-item {
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+  font-size:10px;color:var(--muted);font-weight:500;cursor:pointer;
+  transition:color 0.15s;
+}
+.bnav-item.on { color:var(--green); }
+.bnav-item svg { width:20px;height:20px; }
+
+/* ═══════════════════════════════════════════
+   BOOKING SHEET
+═══════════════════════════════════════════ */
+.sheet-overlay {
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.45);
+  z-index:200;
+  display:flex;align-items:flex-end;
+  opacity:0;pointer-events:none;
+  transition:opacity 0.25s;
+}
+.sheet-overlay.open { opacity:1;pointer-events:all; }
+.sheet {
+  background:var(--surface);
+  border-radius:20px 20px 0 0;
+  width:100%;
+  padding:18px 18px 32px;
+  transform:translateY(100%);
+  transition:transform 0.32s cubic-bezier(0.34,1.56,0.64,1);
+  max-height:88vh;overflow-y:auto;
+}
+.sheet-overlay.open .sheet { transform:translateY(0); }
+.sheet-handle { width:38px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 14px; }
+
+.sheet-title { font-family:'Baloo 2',sans-serif;font-size:18px;font-weight:800;margin-bottom:3px; }
+.sheet-sub { font-size:12px;color:var(--muted);margin-bottom:16px; }
+.drow { display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px; }
+.drow:last-of-type { border-bottom:none; }
+.drow-lbl { color:var(--muted); }
+.drow-val { font-weight:600; }
+
+.pay-opts { margin:14px 0;display:flex;flex-direction:column;gap:7px; }
+.pay-opt {
+  padding:11px 13px;
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  display:flex;align-items:center;gap:10px;
+  cursor:pointer;transition:border-color 0.15s;
+  font-size:13px;font-weight:500;
+}
+.pay-opt.on { border-color:var(--green);background:var(--green-light); }
+.pay-icon { font-size:20px; }
+.pay-desc { font-size:11px;color:var(--muted);margin-top:1px; }
+
+.confirm-btn {
+  width:100%;padding:13px;
+  background:var(--green);color:#fff;
+  border:none;border-radius:var(--r);
+  font-family:'Baloo 2',sans-serif;font-size:15px;font-weight:800;
+  cursor:pointer;transition:background 0.15s;margin-top:4px;
+}
+.confirm-btn:hover { background:#155c32; }
+
+/* SUCCESS */
+.success-view { display:none;text-align:center;padding:10px 0; }
+.success-ico {
+  width:68px;height:68px;background:var(--green-light);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:32px;margin:0 auto 12px;
+  animation:pop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes pop { from{transform:scale(0)} to{transform:scale(1)} }
+.success-title { font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;color:var(--green); }
+.ticket {
+  background:var(--green-light);
+  border:1.5px dashed var(--green);
+  border-radius:var(--r);padding:14px;
+  margin:14px 0;text-align:left;
+}
+.ticket-id { font-family:'Baloo 2',sans-serif;font-size:26px;font-weight:800;color:var(--green);letter-spacing:2px; }
+.ticket-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px; }
+.tg-lbl { font-size:10px;color:var(--muted); }
+.tg-val { font-size:13px;font-weight:600; }
+
+/* ═══════════════════════════════════════════
+   DRIVER APP
+═══════════════════════════════════════════ */
+.driver-body { flex:1;overflow-y:auto;padding:14px 14px 80px; }
+
+.driver-status-card {
+  background:var(--surface);border-radius:var(--r);
+  padding:16px;margin-bottom:12px;
+  box-shadow:var(--shadow-sm);
+}
+.dst-row { display:flex;align-items:center;justify-content:space-between;margin-bottom:12px; }
+.dst-label { font-family:'Baloo 2',sans-serif;font-size:15px;font-weight:700; }
+.toggle-wrap { display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted); }
+.toggle {
+  width:46px;height:26px;background:var(--border);
+  border-radius:13px;position:relative;cursor:pointer;
+  transition:background 0.2s;border:none;
+}
+.toggle.on { background:var(--green); }
+.toggle::after {
+  content:'';position:absolute;top:3px;left:3px;
+  width:20px;height:20px;background:#fff;border-radius:50%;
+  transition:transform 0.2s;box-shadow:var(--shadow-sm);
+}
+.toggle.on::after { transform:translateX(20px); }
+
+.stat-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:8px; }
+.stat-box { background:var(--surface2);border-radius:var(--r-sm);padding:10px 8px;text-align:center; }
+.stat-num { font-family:'Baloo 2',sans-serif;font-size:22px;font-weight:800;color:var(--green); }
+.stat-lbl { font-size:10px;color:var(--muted);margin-top:1px; }
+
+.route-card {
+  background:var(--surface);border-radius:var(--r);
+  padding:14px;margin-bottom:12px;
+  box-shadow:var(--shadow-sm);
+}
+.rc-head { font-family:'Baloo 2',sans-serif;font-size:14px;font-weight:700;margin-bottom:10px; }
+.rc-input {
+  width:100%;padding:10px 12px;
+  border:1.5px solid var(--border);
+  border-radius:var(--r-sm);
+  font-family:'Noto Sans',sans-serif;
+  font-size:13px;color:var(--text);
+  outline:none;background:var(--surface2);
+  transition:border-color 0.15s;
+}
+.rc-input:focus { border-color:var(--green); }
+.rc-row { display:flex;gap:8px;margin-top:8px; }
+.rc-btn {
+  flex:1;padding:10px;
+  background:var(--green);color:#fff;
+  border:none;border-radius:var(--r-sm);
+  font-family:'Baloo 2',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;transition:background 0.15s;
+}
+.rc-btn:hover { background:#155c32; }
+.rc-btn.sec { background:var(--surface);color:var(--green);border:1.5px solid var(--green); }
+
+/* Driver map */
+#driver-map-wrap {
+  border-radius:var(--r);overflow:hidden;
+  height:200px;background:#e8f0e4;
+  margin-bottom:12px;position:relative;
+}
+#driver-map, #demo-map-driver { width:100%;height:100%; }
+.driver-gps-info {
+  position:absolute;bottom:8px;left:8px;
+  background:rgba(255,255,255,0.95);
+  border-radius:8px;padding:6px 10px;
+  font-size:11px;font-weight:600;color:var(--text);
+  box-shadow:var(--shadow-sm);
+}
+
+/* Booking requests */
+.booking-requests { margin-bottom:12px; }
+.br-head { font-family:'Baloo 2',sans-serif;font-size:14px;font-weight:700;margin-bottom:8px; }
+.br-empty { background:var(--surface);border-radius:var(--r);padding:20px;text-align:center;color:var(--muted);font-size:13px;box-shadow:var(--shadow-sm); }
+.br-card {
+  background:var(--surface);border-radius:var(--r);
+  padding:13px;margin-bottom:8px;
+  box-shadow:var(--shadow-sm);
+  border-left:3px solid var(--green);
+  animation:slide-in 0.3s ease;
+}
+@keyframes slide-in { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:none} }
+.br-top { display:flex;justify-content:space-between;align-items:flex-start; }
+.br-rider { font-family:'Baloo 2',sans-serif;font-size:14px;font-weight:700; }
+.br-time { font-size:11px;color:var(--muted); }
+.br-route { font-size:12px;color:var(--muted);margin:3px 0 8px; }
+.br-actions { display:flex;gap:7px; }
+.br-accept { flex:2;padding:8px;background:var(--green);color:#fff;border:none;border-radius:var(--r-sm);font-family:'Baloo 2',sans-serif;font-size:13px;font-weight:700;cursor:pointer; }
+.br-decline { flex:1;padding:8px;background:var(--surface);color:var(--red);border:1.5px solid var(--red);border-radius:var(--r-sm);font-family:'Baloo 2',sans-serif;font-size:13px;font-weight:700;cursor:pointer; }
+
+/* Earnings strip */
+.earnings-strip {
+  background:var(--green);
+  border-radius:var(--r);
+  padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;
+}
+.es-label { font-size:12px;color:rgba(255,255,255,0.75); }
+.es-value { font-family:'Baloo 2',sans-serif;font-size:28px;font-weight:800;color:#fff;line-height:1; }
+.es-meta { font-size:11px;color:rgba(255,255,255,0.65);margin-top:3px; }
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+#toast {
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:#1a1a1a;color:#fff;
+  padding:10px 18px;border-radius:20px;
+  font-size:13px;font-weight:500;
+  white-space:nowrap;z-index:300;
+  opacity:0;transition:all 0.3s;pointer-events:none;
+}
+#toast.show { opacity:1;transform:translateX(-50%) translateY(0); }
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════ */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border);border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     MODE SELECTION SCREEN
+══════════════════════════════ -->
+<div id="mode-screen">
+  <div class="brand-logo">Jan Saarthi</div>
+  <div class="brand-tagline">सबके लिए सफर · Rides for everyone</div>
+
+  <div class="mode-cards">
+    <div class="mode-card" onclick="launch('rider')">
+      <div class="mode-icon">🧍</div>
+      <div>
+        <div class="mode-title">I'm a Rider</div>
+        <div class="mode-desc">Find and book seats near you</div>
+      </div>
+      <div class="mode-arrow">›</div>
+    </div>
+    <div class="mode-card" onclick="launch('driver')">
+      <div class="mode-icon">🚌</div>
+      <div>
+        <div class="mode-title">I'm a Driver</div>
+        <div class="mode-desc">Broadcast route, receive bookings</div>
+      </div>
+      <div class="mode-arrow">›</div>
+    </div>
+  </div>
+
+  <div class="api-banner">
+    🗺️ <strong>Optional:</strong> Add Google Maps API key for real map
+    <input type="text" id="gmaps-key" placeholder="AIzaSy... (leave blank for demo map)">
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     RIDER APP
+══════════════════════════════ -->
+<div class="app" id="rider-app">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHome()">‹</button>
+    <div>
+      <div class="topbar-title">Jan Saarthi</div>
+      <div class="topbar-sub">Rider view</div>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+  </div>
+
+  <div class="rider-search">
+    <div class="search-card">
+      <div class="search-row">
+        <div class="s-dot" style="background:var(--green)"></div>
+        <input class="s-input" id="r-origin" value="Chandmari, Guwahati" placeholder="Your location">
+      </div>
+      <div class="search-row">
+        <div class="s-dot" style="background:var(--red)"></div>
+        <input class="s-input" id="r-dest" placeholder="Where to go?">
+      </div>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <div class="chip on" onclick="filterR('all',this)">All nearby</div>
+    <div class="chip" onclick="filterR('bus',this)">🚌 Bus</div>
+    <div class="chip" onclick="filterR('auto',this)">🛺 Shared Auto</div>
+    <div class="chip" onclick="filterR('erick',this)">⚡ E-Rickshaw</div>
+    <div class="chip" onclick="filterR('bike',this)">🏍️ Bike</div>
+  </div>
+
+  <!-- MAP -->
+  <div id="rider-map-wrap">
+    <div id="demo-map-rider">
+      <svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice">
+        <rect width="400" height="240" fill="#e8f0e4"/>
+        <ellipse cx="340" cy="210" rx="110" ry="50" fill="#c5dff8" opacity="0.6"/>
+        <text x="300" y="220" fill="#5a9fd4" font-size="8" opacity="0.8" font-family="sans-serif">Brahmaputra</text>
+        <line x1="0" y1="120" x2="400" y2="120" stroke="#fff" stroke-width="8" opacity="0.9"/>
+        <line x1="200" y1="0" x2="200" y2="240" stroke="#fff" stroke-width="8" opacity="0.9"/>
+        <line x1="0" y1="60" x2="400" y2="60" stroke="#fff" stroke-width="5" opacity="0.8"/>
+        <line x1="0" y1="180" x2="400" y2="180" stroke="#fff" stroke-width="5" opacity="0.8"/>
+        <line x1="100" y1="0" x2="100" y2="240" stroke="#fff" stroke-width="5" opacity="0.8"/>
+        <line x1="300" y1="0" x2="300" y2="240" stroke="#fff" stroke-width="5" opacity="0.8"/>
+        <line x1="0" y1="0" x2="200" y2="120" stroke="#fff" stroke-width="4" opacity="0.7"/>
+        <rect x="110" y="70" width="30" height="18" rx="2" fill="#d0d8cc" opacity="0.8"/>
+        <rect x="150" y="70" width="38" height="18" rx="2" fill="#c8d4c4" opacity="0.8"/>
+        <rect x="110" y="130" width="24" height="24" rx="2" fill="#d0d8cc" opacity="0.8"/>
+        <rect x="210" y="70" width="38" height="25" rx="2" fill="#c8d4c4" opacity="0.8"/>
+        <rect x="210" y="130" width="32" height="18" rx="2" fill="#d4dccf" opacity="0.8"/>
+        <rect x="310" y="70" width="28" height="18" rx="2" fill="#d0d8cc" opacity="0.8"/>
+        <rect x="310" y="130" width="36" height="18" rx="2" fill="#c8d4c4" opacity="0.8"/>
+        <rect x="25" y="130" width="55" height="36" rx="4" fill="#b8d4a8" opacity="0.9"/>
+        <text x="42" y="151" fill="#4a7c30" font-size="8" font-weight="600" font-family="sans-serif">Park</text>
+        <text x="102" y="115" fill="#888" font-size="7" font-family="sans-serif">GS Road</text>
+        <text x="165" y="18" fill="#888" font-size="7" font-family="sans-serif">RG Baruah Rd</text>
+      </svg>
+      <!-- User marker -->
+      <div class="user-pin"><div class="user-pin-dot"></div></div>
+      <!-- Vehicle markers injected by JS -->
+    </div>
+    <div id="rider-map" style="display:none"></div>
+    <div class="map-legend">
+      <div class="ml-row"><div class="ml-dot" style="background:var(--blue)"></div>Bus</div>
+      <div class="ml-row"><div class="ml-dot" style="background:var(--amber)"></div>Auto</div>
+      <div class="ml-row"><div class="ml-dot" style="background:var(--green)"></div>E-Rick</div>
+    </div>
+    <div class="map-fab">
+      <button class="fab-btn" title="My location" onclick="toast('📍 Re-centred to your location')">📍</button>
+      <button class="fab-btn" title="Refresh" onclick="animateMarkers()">🔄</button>
+    </div>
+  </div>
+
+  <!-- VEHICLE LIST -->
+  <div class="rider-list">
+    <div class="list-header">
+      <span class="list-title">Nearby vehicles</span>
+      <span class="list-count" id="r-count">5 found</span>
+    </div>
+    <div id="vlist"></div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bnav">
+    <div class="bnav-item on">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
+    </div>
+    <div class="bnav-item" onclick="showBookingHistory()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>My Trips
+    </div>
+    <div class="bnav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     DRIVER APP
+══════════════════════════════ -->
+<div class="app" id="driver-app">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHome()">‹</button>
+    <div>
+      <div class="topbar-title">Driver Dashboard</div>
+      <div class="topbar-sub" id="d-status-text">Offline</div>
+    </div>
+    <div class="live-badge" id="d-live-badge" style="background:rgba(255,255,255,0.1)">
+      <div class="live-dot" style="background:#aaa;animation:none"></div>OFF
+    </div>
+  </div>
+
+  <div class="driver-body">
+
+    <!-- Earnings strip -->
+    <div class="earnings-strip">
+      <div>
+        <div class="es-label">Today's earnings</div>
+        <div class="es-value" id="d-earnings">₹0</div>
+        <div class="es-meta" id="d-trips-done">0 trips completed</div>
+      </div>
+      <div style="text-align:right">
+        <div class="es-label">Rating</div>
+        <div class="es-value">4.8 ⭐</div>
+        <div class="es-meta">Excellent</div>
+      </div>
+    </div>
+
+    <!-- Status card -->
+    <div class="driver-status-card">
+      <div class="dst-row">
+        <span class="dst-label">Go online</span>
+        <div class="toggle-wrap">
+          <span id="d-toggle-lbl">Offline</span>
+          <button class="toggle" id="d-toggle" onclick="toggleDriver()"></button>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-num" id="d-stat-riders">0</div><div class="stat-lbl">Riders today</div></div>
+        <div class="stat-box"><div class="stat-num" id="d-stat-trips">0</div><div class="stat-lbl">Trips done</div></div>
+        <div class="stat-box"><div class="stat-num" id="d-stat-dist">0</div><div class="stat-lbl">km driven</div></div>
+      </div>
+    </div>
+
+    <!-- Route card -->
+    <div class="route-card">
+      <div class="rc-head">Set your route</div>
+      <input class="rc-input" id="d-route-input" placeholder="Where are you going? e.g. Paltan Bazaar" value="">
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <div class="chip" onclick="setRoute('Paltan Bazaar')">Paltan Bazaar</div>
+        <div class="chip" onclick="setRoute('Railway Station')">Railway Station</div>
+        <div class="chip" onclick="setRoute('Ganeshguri')">Ganeshguri</div>
+        <div class="chip" onclick="setRoute('ISBT Khanapara')">ISBT</div>
+      </div>
+      <div class="rc-row">
+        <button class="rc-btn sec" onclick="setSeats(-1)">− Seat</button>
+        <div style="display:flex;align-items:center;justify-content:center;font-family:'Baloo 2',sans-serif;font-size:16px;font-weight:700;flex:1" id="d-seats-disp">3 seats left</div>
+        <button class="rc-btn sec" onclick="setSeats(1)">+ Seat</button>
+      </div>
+    </div>
+
+    <!-- Driver map -->
+    <div id="driver-map-wrap">
+      <div id="demo-map-driver" style="width:100%;height:100%;background:#e8f0e4;position:relative">
+        <svg width="100%" height="100%" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="200" fill="#e8f0e4"/>
+          <line x1="0" y1="100" x2="400" y2="100" stroke="#fff" stroke-width="8" opacity="0.9"/>
+          <line x1="200" y1="0" x2="200" y2="200" stroke="#fff" stroke-width="8" opacity="0.9"/>
+          <line x1="0" y1="50" x2="400" y2="50" stroke="#fff" stroke-width="4" opacity="0.8"/>
+          <line x1="0" y1="150" x2="400" y2="150" stroke="#fff" stroke-width="4" opacity="0.8"/>
+          <line x1="100" y1="0" x2="100" y2="200" stroke="#fff" stroke-width="4" opacity="0.8"/>
+          <line x1="300" y1="0" x2="300" y2="200" stroke="#fff" stroke-width="4" opacity="0.8"/>
+          <rect x="110" y="55" width="32" height="22" rx="2" fill="#d0d8cc" opacity="0.8"/>
+          <rect x="210" y="55" width="38" height="28" rx="2" fill="#c8d4c4" opacity="0.8"/>
+          <rect x="310" y="55" width="28" height="18" rx="2" fill="#d0d8cc" opacity="0.8"/>
+        </svg>
+        <!-- Driver pin -->
+        <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10">
+          <div style="width:18px;height:18px;background:var(--amber);border:3px solid #fff;border-radius:50%;box-shadow:0 0 0 5px rgba(230,137,10,0.2);animation:ring 2s ease infinite"></div>
+        </div>
+        <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,0.9);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;white-space:nowrap" id="d-gps-label">GPS: waiting...</div>
+      </div>
+      <div id="driver-map" style="display:none;width:100%;height:100%"></div>
+    </div>
+
+    <!-- Booking requests -->
+    <div class="booking-requests">
+      <div class="br-head">Booking requests <span id="req-badge" style="background:var(--red);color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;margin-left:4px;display:none">0</span></div>
+      <div id="req-list"><div class="br-empty">No requests yet. Go online and set your route.</div></div>
+    </div>
+
+  </div><!-- end driver-body -->
+
+  <div class="bnav">
+    <div class="bnav-item on">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Dashboard
+    </div>
+    <div class="bnav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Earnings
+    </div>
+    <div class="bnav-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     BOOKING SHEET (RIDER)
+══════════════════════════════ -->
+<div class="sheet-overlay" id="booking-sheet" onclick="closeSheet(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div id="booking-form-view">
+      <div class="sheet-title" id="bs-title">Book seat</div>
+      <div class="sheet-sub" id="bs-sub">—</div>
+      <div class="drow"><span class="drow-lbl">Vehicle</span><span class="drow-val" id="bs-vehicle">—</span></div>
+      <div class="drow"><span class="drow-lbl">Route</span><span class="drow-val" id="bs-route">—</span></div>
+      <div class="drow"><span class="drow-lbl">Arrives in</span><span class="drow-val" id="bs-eta">—</span></div>
+      <div class="drow"><span class="drow-lbl">Fare</span><span class="drow-val" id="bs-fare" style="color:var(--green);font-size:19px;font-family:'Baloo 2',sans-serif;font-weight:800">—</span></div>
+      <p style="font-size:12px;font-weight:600;color:var(--muted);margin:14px 0 8px">Payment method</p>
+      <div class="pay-opts">
+        <div class="pay-opt on" onclick="selPay(this)">
+          <span class="pay-icon">📱</span>
+          <div><div>UPI</div><div class="pay-desc">PhonePe · GPay · Paytm</div></div>
+        </div>
+        <div class="pay-opt" onclick="selPay(this)">
+          <span class="pay-icon">💵</span>
+          <div><div>Cash on board</div><div class="pay-desc">Reserve now, pay when boarding</div></div>
+        </div>
+        <div class="pay-opt" onclick="selPay(this)">
+          <span class="pay-icon">👛</span>
+          <div><div>JS Wallet</div><div class="pay-desc">Balance: ₹45.00</div></div>
+        </div>
+      </div>
+      <button class="confirm-btn" onclick="confirmBooking()">Confirm &amp; Book</button>
+    </div>
+    <div class="success-view" id="booking-success-view">
+      <div class="success-ico">✅</div>
+      <div class="success-title">Seat Confirmed!</div>
+      <p style="font-size:13px;color:var(--muted);margin:6px 0 0">Driver notified. Head to the stop.</p>
+      <div class="ticket">
+        <div style="font-size:10px;color:var(--muted)">Booking ID</div>
+        <div class="ticket-id" id="t-id">JS-000000</div>
+        <div class="ticket-grid">
+          <div><div class="tg-lbl">Vehicle</div><div class="tg-val" id="t-vehicle">—</div></div>
+          <div><div class="tg-lbl">ETA</div><div class="tg-val" id="t-eta">—</div></div>
+          <div><div class="tg-lbl">Fare</div><div class="tg-val" style="color:var(--green)" id="t-fare">—</div></div>
+          <div><div class="tg-lbl">Status</div><div class="tg-val" style="color:var(--green)">Confirmed ✓</div></div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin-bottom:14px">Show booking ID to driver when boarding</p>
+      <button class="confirm-btn" onclick="doneBooking()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════
+   DATABASE  (localStorage as SQLite substitute)
+   Tables: bookings, drivers, vehicles
+═══════════════════════════════════════════ */
+const DB = {
+  get(key) { try { return JSON.parse(localStorage.getItem('js_'+key) || '[]'); } catch { return []; } },
+  set(key, val) { localStorage.setItem('js_'+key, JSON.stringify(val)); },
+  insert(table, row) {
+    const rows = DB.get(table);
+    rows.push({ ...row, id: 'JS-'+Math.floor(100000+Math.random()*900000), ts: Date.now() });
+    DB.set(table, rows);
+    return rows[rows.length-1];
+  },
+  query(table, predFn) { return DB.get(table).filter(predFn || (()=>true)); }
+};
+
+/* ═══════════════════════════════════════════
+   REAL-TIME BUS (BroadcastChannel = WebSocket substitute)
+   Driver tab broadcasts location → Rider tab receives
+═══════════════════════════════════════════ */
+const BC = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('jansaarthi') : null;
+
+/* ═══════════════════════════════════════════
+   VEHICLE DATA (seed / demo)
+═══════════════════════════════════════════ */
+let vehicles = [
+  { id:'v1', name:'Bus 14', route:'Chandmari → Paltan Bazaar', via:'via GS Road → Fancy Bazaar', eta:'3 min', fare:'₹12', type:'bus',   seats:14, lat:26.1520, lng:91.7280, active:true },
+  { id:'v2', name:'Shared Auto', route:'Chandmari → Railway Station', via:'via Six Mile → Maligaon', eta:'2 min', fare:'₹18', type:'auto',  seats:2,  lat:26.1390, lng:91.7450, active:true },
+  { id:'v3', name:'E-Rickshaw', route:'Chandmari → Ganeshguri', via:'via Ulubari → Dispur', eta:'1 min', fare:'₹8',  type:'erick', seats:3,  lat:26.1400, lng:91.7340, active:true },
+  { id:'v4', name:'Bus 47', route:'Chandmari → Jalukbari', via:'via Bhangagarh → ISBT', eta:'6 min', fare:'₹10', type:'bus',   seats:22, lat:26.1510, lng:91.7500, active:true },
+  { id:'v5', name:'Shared Auto', route:'Chandmari → Khanapara', via:'via Hatigaon → Zoo Road', eta:'4 min', fare:'₹20', type:'auto',  seats:1,  lat:26.1360, lng:91.7260, active:true },
+];
+
+// Marker positions for demo map (as %)
+const markerPos = {
+  v1:{ left:'28%', top:'38%' }, v2:{ left:'62%', top:'42%' },
+  v3:{ left:'45%', top:'65%' }, v4:{ left:'72%', top:'28%' },
+  v5:{ left:'20%', top:'60%' },
+};
+const typeClass = { bus:'mv-bus', auto:'mv-auto', erick:'mv-erick' };
+const typeEmoji = { bus:'🚌', auto:'🛺', erick:'⚡', bike:'🏍️' };
+
+let currentVehicleId = null;
+let driverOnline = false;
+let driverSeats = 3;
+let driverEarnings = 0;
+let driverTrips = 0;
+let driverRiders = 0;
+let gmaps = null;
+let gmapMarkers = {};
+
+/* ═══════════════════════════════════════════
+   ROUTING
+═══════════════════════════════════════════ */
+function launch(mode) {
+  document.getElementById('mode-screen').style.display = 'none';
+  document.getElementById(mode+'-app').classList.add('active');
+  if (mode === 'rider') { initRider(); }
+  else { initDriver(); }
+  const key = document.getElementById('gmaps-key').value.trim();
+  if (key.length > 20) loadGoogleMaps(key, mode);
+}
+
+function goHome() {
+  document.querySelectorAll('.app').forEach(a => a.classList.remove('active'));
+  document.getElementById('mode-screen').style.display = 'flex';
+}
+
+/* ═══════════════════════════════════════════
+   RIDER LOGIC
+═══════════════════════════════════════════ */
+function initRider() {
+  renderVehicleList(vehicles);
+  renderMapMarkers();
+  startMarkerAnimation();
+  // Listen for real-time driver location updates
+  if (BC) {
+    BC.onmessage = (e) => {
+      if (e.data.type === 'location') updateDriverOnMap(e.data);
+      if (e.data.type === 'online') toast('🚌 New driver online: '+e.data.route);
+      if (e.data.type === 'offline') toast('Driver went offline');
+    };
+  }
+}
+
+function renderVehicleList(list) {
+  const container = document.getElementById('vlist');
+  container.innerHTML = '';
+  list.forEach(v => {
+    const div = document.createElement('div');
+    div.className = 'vcard';
+    div.id = v.id;
+    div.dataset.type = v.type;
+    div.onclick = () => selectVehicle(v.id);
+    div.innerHTML = `
+      <div class="vcard-top">
+        <div class="vcard-ico ico-${v.type}">${typeEmoji[v.type]}</div>
+        <div class="vcard-body">
+          <div class="vcard-name">${v.name}</div>
+          <div class="vcard-route">${v.via}</div>
+          <div class="vcard-pills">
+            <span class="pill pill-eta">⏱ ${v.eta}</span>
+            <span class="pill pill-seats">💺 ${v.seats} seats</span>
+            <span class="pill pill-live"><div class="pill-live-dot"></div>Live</span>
+          </div>
+        </div>
+        <div class="vcard-price">
+          <div class="price-big">${v.fare}</div>
+          <div class="price-lbl">per seat</div>
+        </div>
+      </div>
+      <div class="book-row">
+        <button class="book-btn" onclick="openBookingSheet('${v.id}',event)">Book seat · ${v.fare} →</button>
+      </div>`;
+    container.appendChild(div);
+  });
+  document.getElementById('r-count').textContent = list.length + ' found';
+}
+
+function renderMapMarkers() {
+  const wrap = document.getElementById('demo-map-rider');
+  document.querySelectorAll('.map-vmarker').forEach(m => m.remove());
+  vehicles.forEach(v => {
+    const p = markerPos[v.id];
+    if (!p) return;
+    const el = document.createElement('div');
+    el.className = 'map-vmarker';
+    el.id = 'mm-'+v.id;
+    el.style.left = p.left;
+    el.style.top = p.top;
+    el.onclick = () => { selectVehicle(v.id); document.getElementById(v.id).scrollIntoView({behavior:'smooth',block:'nearest'}); };
+    el.innerHTML = `<div class="mv-bubble ${typeClass[v.type]}">${typeEmoji[v.type]} ${v.name}</div>`;
+    wrap.appendChild(el);
+  });
+}
+
+function selectVehicle(id) {
+  document.querySelectorAll('.vcard').forEach(c => c.classList.remove('sel'));
+  const card = document.getElementById(id);
+  if (card) { card.classList.add('sel'); currentVehicleId = id; }
+}
+
+function filterR(type, el) {
+  document.querySelectorAll('.filter-bar .chip').forEach(c => c.classList.remove('on'));
+  el.classList.add('on');
+  const filtered = type === 'all' ? vehicles : vehicles.filter(v => v.type === type);
+  renderVehicleList(filtered);
+  // Show/hide map markers
+  document.querySelectorAll('.map-vmarker').forEach(m => {
+    const vid = m.id.replace('mm-','');
+    const v = vehicles.find(x => x.id === vid);
+    m.style.display = (!v || type === 'all' || v.type === type) ? 'block' : 'none';
+  });
+}
+
+let markerAnimInterval = null;
+function startMarkerAnimation() {
+  markerAnimInterval = setInterval(() => animateMarkers(), 4000);
+}
+function animateMarkers() {
+  document.querySelectorAll('.map-vmarker').forEach(m => {
+    const dx = (Math.random()-0.5)*3, dy = (Math.random()-0.5)*2;
+    const cl = parseFloat(m.style.left), ct = parseFloat(m.style.top);
+    m.style.left = Math.max(10,Math.min(85,cl+dx))+'%';
+    m.style.top  = Math.max(12,Math.min(78,ct+dy))+'%';
+  });
+}
+
+function updateDriverOnMap(data) {
+  // Find or inject a marker for the real-time driver
+  let el = document.getElementById('mm-realdriver');
+  if (!el) {
+    const wrap = document.getElementById('demo-map-rider');
+    el = document.createElement('div');
+    el.className = 'map-vmarker';
+    el.id = 'mm-realdriver';
+    el.innerHTML = `<div class="mv-bubble mv-auto">🛺 Live Driver</div>`;
+    wrap.appendChild(el);
+    // Add to vehicle list
+    const liveV = {id:'realdriver', name:'Live Driver', route:'Your area → '+data.route, via:'Live GPS tracking', eta:'nearby', fare:'₹15', type:'auto', seats:data.seats||3, lat:data.lat, lng:data.lng, active:true};
+    if (!vehicles.find(v => v.id === 'realdriver')) {
+      vehicles.unshift(liveV);
+      renderVehicleList(vehicles);
+    }
+  }
+  // Position as % of demo map (rough conversion from lat/lng delta)
+  const baseLat = 26.1445, baseLng = 91.7362;
+  const dlat = (data.lat - baseLat) * 2000;
+  const dlng = (data.lng - baseLng) * 1200;
+  el.style.left = Math.max(10,Math.min(85, 50+dlng))+'%';
+  el.style.top  = Math.max(12,Math.min(78, 50-dlat))+'%';
+}
+
+/* ═══════════════════════════════════════════
+   BOOKING FLOW
+═══════════════════════════════════════════ */
+function openBookingSheet(id, event) {
+  if (event) event.stopPropagation();
+  const v = vehicles.find(x => x.id === id);
+  if (!v) return;
+  currentVehicleId = id;
+  document.getElementById('bs-title').textContent = 'Book — '+v.name;
+  document.getElementById('bs-sub').textContent = v.route;
+  document.getElementById('bs-vehicle').textContent = v.name;
+  document.getElementById('bs-route').textContent = v.route;
+  document.getElementById('bs-eta').textContent = v.eta;
+  document.getElementById('bs-fare').textContent = v.fare;
+  document.getElementById('booking-form-view').style.display = 'block';
+  document.getElementById('booking-success-view').style.display = 'none';
+  document.getElementById('booking-sheet').classList.add('open');
+}
+
+function closeSheet(e) {
+  if (e.target === document.getElementById('booking-sheet'))
+    document.getElementById('booking-sheet').classList.remove('open');
+}
+
+function selPay(el) {
+  document.querySelectorAll('.pay-opt').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function confirmBooking() {
+  const v = vehicles.find(x => x.id === currentVehicleId);
+  if (!v) return;
+  // Save to DB
+  const booking = DB.insert('bookings', {
+    vehicle: v.name, route: v.route, eta: v.eta, fare: v.fare,
+    payment: document.querySelector('.pay-opt.on').querySelector('div').textContent,
+    status: 'confirmed'
+  });
+  // Notify driver via BroadcastChannel
+  if (BC) BC.postMessage({ type:'booking', bookingId:booking.id, vehicle:v.name, route:v.route, fare:v.fare });
+  // Decrement seats
+  v.seats = Math.max(0, v.seats - 1);
+  // Show success
+  document.getElementById('t-id').textContent = booking.id;
+  document.getElementById('t-vehicle').textContent = v.name;
+  document.getElementById('t-eta').textContent = v.eta;
+  document.getElementById('t-fare').textContent = v.fare;
+  document.getElementById('booking-form-view').style.display = 'none';
+  document.getElementById('booking-success-view').style.display = 'block';
+}
+
+function doneBooking() {
+  document.getElementById('booking-sheet').classList.remove('open');
+  document.querySelectorAll('.vcard').forEach(c => c.classList.remove('sel'));
+  renderVehicleList(vehicles);
+  toast('🎉 Booking saved! Head to the stop.');
+}
+
+function showBookingHistory() {
+  const bookings = DB.query('bookings');
+  if (!bookings.length) { toast('No trips yet!'); return; }
+  const last = bookings[bookings.length-1];
+  toast('Last trip: '+last.vehicle+' · '+last.fare);
+}
+
+/* ═══════════════════════════════════════════
+   DRIVER LOGIC
+═══════════════════════════════════════════ */
+let gpsWatchId = null;
+let driverRoute = '';
+
+function initDriver() {
+  // Listen for booking confirmations from riders
+  if (BC) {
+    BC.onmessage = (e) => {
+      if (e.data.type === 'booking') receiveBookingRequest(e.data);
+    };
+  }
+  updateDriverStats();
+}
+
+function toggleDriver() {
+  driverOnline = !driverOnline;
+  const toggle = document.getElementById('d-toggle');
+  const lbl = document.getElementById('d-toggle-lbl');
+  const badge = document.getElementById('d-live-badge');
+  const statusText = document.getElementById('d-status-text');
+
+  toggle.classList.toggle('on', driverOnline);
+  lbl.textContent = driverOnline ? 'Online' : 'Offline';
+  statusText.textContent = driverOnline ? (driverRoute || 'Online — set your route') : 'Offline';
+  badge.innerHTML = driverOnline
+    ? '<div class="live-dot"></div>LIVE'
+    : '<div class="live-dot" style="background:#aaa;animation:none"></div>OFF';
+  badge.style.background = driverOnline ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.08)';
+
+  if (driverOnline) {
+    toast('✅ You are now online! Riders can see you.');
+    startGPS();
+    if (BC) BC.postMessage({ type:'online', route:driverRoute||'Unknown' });
+  } else {
+    stopGPS();
+    toast('You went offline.');
+    if (BC) BC.postMessage({ type:'offline' });
+  }
+}
+
+function setRoute(r) {
+  document.getElementById('d-route-input').value = r;
+  driverRoute = r;
+  toast('Route set: '+r);
+  document.getElementById('d-status-text').textContent = 'Online → '+r;
+}
+
+function setSeats(delta) {
+  driverSeats = Math.max(0, Math.min(10, driverSeats + delta));
+  document.getElementById('d-seats-disp').textContent = driverSeats+' seats left';
+}
+
+function startGPS() {
+  if (!navigator.geolocation) {
+    document.getElementById('d-gps-label').textContent = 'GPS: not available';
+    return;
+  }
+  gpsWatchId = navigator.geolocation.watchPosition(pos => {
+    const { latitude: lat, longitude: lng } = pos.coords;
+    document.getElementById('d-gps-label').textContent = `GPS: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    // Broadcast to all rider tabs
+    if (BC) BC.postMessage({
+      type:'location', lat, lng,
+      route: document.getElementById('d-route-input').value || driverRoute,
+      seats: driverSeats,
+      driverName: 'Driver'
+    });
+    // If Google Maps loaded, move marker
+    if (gmaps && gmapMarkers['driver']) {
+      gmapMarkers['driver'].setPosition({ lat, lng });
+    }
+  }, err => {
+    document.getElementById('d-gps-label').textContent = 'GPS: permission denied — using demo';
+    // Simulate location for demo
+    simulateGPS();
+  }, { enableHighAccuracy:true, maximumAge:3000 });
+}
+
+function simulateGPS() {
+  let lat = 26.1445, lng = 91.7362;
+  const sim = setInterval(() => {
+    if (!driverOnline) { clearInterval(sim); return; }
+    lat += (Math.random()-0.5)*0.0008;
+    lng += (Math.random()-0.5)*0.0008;
+    document.getElementById('d-gps-label').textContent = `GPS (sim): ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+    if (BC) BC.postMessage({
+      type:'location', lat, lng,
+      route: document.getElementById('d-route-input').value || 'Demo route',
+      seats: driverSeats
+    });
+  }, 3000);
+}
+
+function stopGPS() {
+  if (gpsWatchId !== null) { navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId = null; }
+  document.getElementById('d-gps-label').textContent = 'GPS: offline';
+}
+
+function receiveBookingRequest(data) {
+  const list = document.getElementById('req-list');
+  const empty = list.querySelector('.br-empty');
+  if (empty) empty.remove();
+
+  const rid = 'req-'+Date.now();
+  const names = ['Priya S.','Raju D.','Meena K.','Arjun B.','Sunita R.'];
+  const riderName = names[Math.floor(Math.random()*names.length)];
+  const div = document.createElement('div');
+  div.className = 'br-card';
+  div.id = rid;
+  div.innerHTML = `
+    <div class="br-top">
+      <div class="br-rider">${riderName}</div>
+      <div class="br-time">just now</div>
+    </div>
+    <div class="br-route">${data.route} · ${data.fare}</div>
+    <div class="br-actions">
+      <button class="br-accept" onclick="acceptRequest('${rid}','${data.fare}')">✓ Accept</button>
+      <button class="br-decline" onclick="declineRequest('${rid}')">✗</button>
+    </div>`;
+  list.insertBefore(div, list.firstChild);
+
+  // Update badge
+  const badge = document.getElementById('req-badge');
+  badge.style.display = 'inline';
+  badge.textContent = list.querySelectorAll('.br-card').length;
+  toast('📲 New booking request!');
+}
+
+function acceptRequest(rid, fare) {
+  const card = document.getElementById(rid);
+  if (card) card.remove();
+  const amt = parseInt(fare.replace(/[^\d]/g,''));
+  driverEarnings += amt;
+  driverTrips++;
+  driverRiders++;
+  driverSeats = Math.max(0, driverSeats - 1);
+  document.getElementById('d-seats-disp').textContent = driverSeats+' seats left';
+  updateDriverStats();
+  updateBadge();
+  toast('✅ Accepted! Rider is on the way.');
+}
+
+function declineRequest(rid) {
+  document.getElementById(rid)?.remove();
+  updateBadge();
+  toast('Booking declined.');
+}
+
+function updateBadge() {
+  const count = document.getElementById('req-list').querySelectorAll('.br-card').length;
+  const badge = document.getElementById('req-badge');
+  badge.style.display = count ? 'inline' : 'none';
+  badge.textContent = count;
+  if (!count) {
+    const list = document.getElementById('req-list');
+    if (!list.querySelector('.br-card')) list.innerHTML = '<div class="br-empty">No pending requests.</div>';
+  }
+}
+
+function updateDriverStats() {
+  document.getElementById('d-earnings').textContent = '₹'+driverEarnings;
+  document.getElementById('d-trips-done').textContent = driverTrips+' trips completed';
+  document.getElementById('d-stat-riders').textContent = driverRiders;
+  document.getElementById('d-stat-trips').textContent = driverTrips;
+  document.getElementById('d-stat-dist').textContent = (driverTrips*4.2).toFixed(1);
+}
+
+/* ═══════════════════════════════════════════
+   GOOGLE MAPS INTEGRATION
+═══════════════════════════════════════════ */
+function loadGoogleMaps(key, mode) {
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=initGMaps_${mode}`;
+  script.async = true;
+  document.head.appendChild(script);
+}
+
+function initGMaps_rider() {
+  document.getElementById('demo-map-rider').style.display = 'none';
+  const mapEl = document.getElementById('rider-map');
+  mapEl.style.display = 'block';
+  const center = { lat:26.1445, lng:91.7362 };
+  gmaps = new google.maps.Map(mapEl, {
+    center, zoom:14,
+    disableDefaultUI:true,
+    styles:[
+      {featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},
+      {featureType:'road',elementType:'geometry',stylers:[{color:'#ffffff'}]},
+      {featureType:'landscape',stylers:[{color:'#f0f4ef'}]},
+      {featureType:'water',stylers:[{color:'#c5dff8'}]},
+    ]
+  });
+  // User marker
+  new google.maps.Marker({ position:center, map:gmaps, icon:{ path:google.maps.SymbolPath.CIRCLE, scale:8, fillColor:'#1a6b3c', fillOpacity:1, strokeColor:'#fff', strokeWeight:2 } });
+  // Vehicle markers
+  vehicles.forEach(v => {
+    const marker = new google.maps.Marker({
+      position:{ lat:v.lat, lng:v.lng }, map:gmaps,
+      label:{ text:typeEmoji[v.type]+' '+v.name.split(' ')[0], fontSize:'11px', fontWeight:'700' },
+      title:v.name
+    });
+    gmapMarkers[v.id] = marker;
+    marker.addListener('click', () => { selectVehicle(v.id); document.getElementById(v.id).scrollIntoView({behavior:'smooth',block:'nearest'}); });
+    // Animate
+    setInterval(() => {
+      const p = marker.getPosition();
+      marker.setPosition({ lat:p.lat()+(Math.random()-0.5)*0.0008, lng:p.lng()+(Math.random()-0.5)*0.0008 });
+    }, 4000);
+  });
+  // Listen for real driver location
+  if (BC) BC.onmessage = (e) => {
+    if (e.data.type === 'location') {
+      const pos = { lat:e.data.lat, lng:e.data.lng };
+      if (!gmapMarkers['realdriver']) {
+        gmapMarkers['realdriver'] = new google.maps.Marker({ position:pos, map:gmaps, label:{ text:'🛺 Live', fontSize:'11px', fontWeight:'700' }, animation:google.maps.Animation.BOUNCE });
+        setTimeout(() => gmapMarkers['realdriver'].setAnimation(null), 2000);
+      } else { gmapMarkers['realdriver'].setPosition(pos); }
+    }
+    if (e.data.type === 'online') toast('🚌 New driver online!');
+    if (e.data.type === 'booking') receiveBookingRequest(e.data);
+  };
+}
+
+function initGMaps_driver() {
+  document.getElementById('demo-map-driver').style.display = 'none';
+  const mapEl = document.getElementById('driver-map');
+  mapEl.style.display = 'block';
+  const center = { lat:26.1445, lng:91.7362 };
+  const dmap = new google.maps.Map(mapEl, {
+    center, zoom:15, disableDefaultUI:true,
+    styles:[{featureType:'poi',elementType:'labels',stylers:[{visibility:'off'}]},{featureType:'landscape',stylers:[{color:'#f0f4ef'}]},{featureType:'water',stylers:[{color:'#c5dff8'}]}]
+  });
+  const driverMarker = new google.maps.Marker({ position:center, map:dmap, icon:{ path:google.maps.SymbolPath.CIRCLE, scale:10, fillColor:'#e6890a', fillOpacity:1, strokeColor:'#fff', strokeWeight:2 } });
+  gmapMarkers['driver'] = driverMarker;
+  // Track real GPS and move marker
+  if (navigator.geolocation) {
+    navigator.geolocation.watchPosition(pos => {
+      const latlng = { lat:pos.coords.latitude, lng:pos.coords.longitude };
+      driverMarker.setPosition(latlng);
+      dmap.panTo(latlng);
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════ */
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
